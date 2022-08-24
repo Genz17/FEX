@@ -9,7 +9,7 @@ class Controller(nn.Module):
         self.softmatTemp    = 5.0
         self.tanhC          = 2.5
         self.tree           = tree
-        self.batchSize      = 5
+        self.batchSize      = 10
         self.NN             = nn.Sequential(
                                 nn.Linear(20, 50),
                                 nn.ReLU(),

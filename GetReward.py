@@ -47,5 +47,3 @@ def GetReward(batchSize, batchOperations, domainLeft, domainRight, dim, trainabl
         #errList.append(min(medList))
 
     return loss
-
-
