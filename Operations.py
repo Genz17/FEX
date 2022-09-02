@@ -27,9 +27,9 @@ class BinaryOperation(nn.Module):
 
 
 
-unary_functions = [lambda x: 0*x**2,
-                   lambda x: 1+0*x**2,
-                   lambda x: x+0*x**2,
+unary_functions = [lambda x: 0*x,
+                   lambda x: 1+0*x,
+                   lambda x: x,
                    lambda x: x**2,
                    lambda x: x**3,
                    lambda x: x**4,

@@ -2,48 +2,45 @@ import torch
 from DataGen import DataGen
 from Equation import LHS_pde,RHS_pde,true_solution
 
-def GetReward(batchSize, batchOperations, domainLeft, domainRight, dim, trainableTree):
+def GetReward(model, batchOperations, domainLeft, domainRight, dim):
 
-    data = DataGen(batchSize, dim, domainLeft, domainRight)
+    batchSize = model.batchSize
     errList = []
 
     for batch in range(batchSize):
         batchOperation = batchOperations[batch]
-        optimizer = torch.optim.Adam(trainableTree.parameters())
+        model.tree.PlaceOP(batchOperation)
+        optimizer = torch.optim.Adam(model.tree.parameters())
 
         for _ in range(20):
+            data = DataGen(1000, dim, domainLeft, domainRight).cuda()
             optimizer.zero_grad()
-            databd = DataGen(batchSize, dim, domainLeft, domainRight, True)
+            databd = DataGen(1000, dim, domainLeft, domainRight, True).cuda()
             solubd = true_solution(databd)
-            ansTrainTree = trainableTree(data, batchOperation)
-            ansbdTree = trainableTree(databd, batchOperation)
-            loss = torch.nn.functional.mse_loss(LHS_pde(ansTrainTree, data, dim), RHS_pde(data)) + 100*torch.nn.functional.mse_loss(ansbdTree, solubd)
-            loss.backward(retain_graph=True)
+            ansTrainTree = model.tree(data)
+            ansbdTree = model.tree(databd)
+            loss = torch.nn.functional.mse_loss(LHS_pde(ansTrainTree, data, dim), RHS_pde(data)) + torch.nn.functional.mse_loss(ansbdTree, solubd)
+            loss.backward()
             optimizer.step()
 
 
-        optimizer = torch.optim.LBFGS(trainableTree.parameters(), lr=1, max_iter = 20)
         medList = []
+        optimizer = torch.optim.LBFGS(model.tree.parameters(), lr=1, max_iter = 20)
 
         def closure():
+            data = DataGen(1000, dim, domainLeft, domainRight).cuda()
             optimizer.zero_grad()
-            databd = DataGen(batchSize, dim, domainLeft, domainRight, True)
+            databd = DataGen(1000, dim, domainLeft, domainRight, True).cuda()
             solubd = true_solution(databd)
-            ansTrainTree = trainableTree(data, batchOperation)
-            ansbdTree = trainableTree(databd, batchOperation)
-            loss = torch.nn.functional.mse_loss(LHS_pde(ansTrainTree, data, dim), RHS_pde(data)) + 100*torch.nn.functional.mse_loss(ansbdTree, solubd)
-            #medList.append(loss)
+            ansTrainTree = model.tree(data)
+            ansbdTree = model.tree(databd)
+            loss = torch.nn.functional.mse_loss(LHS_pde(ansTrainTree, data, dim), RHS_pde(data)) + torch.nn.functional.mse_loss(ansbdTree, solubd)
+            medList.append(loss)
             loss.backward(retain_graph=True)
             return loss
 
         optimizer.step(closure)
 
-        databd = DataGen(batchSize, dim, domainLeft, domainRight, True)
-        solubd = true_solution(databd)
-        ansTrainTree = trainableTree(data, batchOperation)
-        ansbdTree = trainableTree(databd, batchOperation)
-        loss = torch.nn.functional.mse_loss(LHS_pde(ansTrainTree, data, dim), RHS_pde(data)) + 100*torch.nn.functional.mse_loss(ansbdTree, solubd)
-        #medList.append(loss)
-        #errList.append(min(medList))
+        errList.append(min(medList))
 
-    return loss
+    return errList

@@ -49,10 +49,18 @@ def BasicTreeGen():
     tree = BinaryTreeNode(False)
     tree.insertLeft(False)
     tree.insertRight(False)
-    tree.leftchild.insertLeft(True)
-    tree.leftchild.insertRight(True)
-    tree.rightchild.insertLeft(True)
-    tree.rightchild.insertRight(True)
+    tree.leftchild.insertLeft(False)
+    tree.leftchild.insertRight(False)
+    tree.rightchild.insertLeft(False)
+    tree.rightchild.insertRight(False)
+    tree.leftchild.leftchild.insertLeft(True)
+    tree.leftchild.leftchild.insertRight(True)
+    tree.leftchild.rightchild.insertLeft(True)
+    tree.leftchild.rightchild.insertRight(True)
+    tree.rightchild.leftchild.insertLeft(True)
+    tree.rightchild.leftchild.insertRight(True)
+    tree.rightchild.rightchild.insertLeft(True)
+    tree.rightchild.rightchild.insertRight(True)
     NodeNumCompute(tree)
     return tree
 
@@ -119,21 +127,34 @@ def LeaveNumCompute(tree):
     leaveList = []
     for i in range(1,tree.count+1):
         leave = ShowTree(tree, i)
-        leaveList.append(leave.count)
+        if leave.leftchild == None and leave.rightchild == None:
+            leaveList.append(leave.count)
     return leaveList
 
 class TrainableTree(nn.Module):
     def __init__(self, dim):
         super(TrainableTree, self).__init__()
+        self.dim                = dim
         self.tree               = BasicTreeGen()
         self.operators          = {}
+        self.linearTransform    = {}
         self.OperatorsGen(self.tree)
-        self.linearTransform    = nn.ModuleDict({str(i):nn.Linear(dim,1,bias=True) for i in LeaveNumCompute(self.tree)})
-        self.operators = nn.ModuleDict(self.operators)
+        self.LinearGen()
+        self.operators          = nn.ModuleDict(self.operators)
+        self.linearTransform    = nn.ModuleDict(self.linearTransform)
 
-    def forward(self, inputData, operationList):
-        OperationPlace(self.tree, operationList, self.operators)
+    def forward(self, inputData):
         return ComputeThroughTree(self.tree, self.linearTransform, inputData)
+
+    def PlaceOP(self, operationList):
+        OperationPlace(self.tree, operationList, self.operators)
+
+    def LinearGen(self):
+        for i in LeaveNumCompute(self.tree):
+            L = nn.Linear(self.dim, 1)
+            nn.init.ones_(L.weight)
+            nn.init.ones_(L.bias)
+            self.linearTransform.update({str(i):L})
 
     def OperatorsGen(self, tree):
         if tree.leftchild == None and tree.rightchild == None:

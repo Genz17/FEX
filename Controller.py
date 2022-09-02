@@ -11,12 +11,12 @@ class Controller(nn.Module):
         self.tree           = tree
         self.batchSize      = 10
         self.NN             = nn.Sequential(
-                                nn.Linear(20, 50),
+                                nn.Linear(20, 60),
                                 nn.ReLU(),
-                                nn.Linear(50, sum(BinaryTree.TotalopNumCompute(tree.tree))))
+                                nn.Linear(60, sum(BinaryTree.TotalopNumCompute(tree.tree))))
 
     def probCalc(self):
-        inputData = torch.zeros(self.batchSize, 20, requires_grad=True)
+        inputData = torch.zeros(self.batchSize, 20, requires_grad=True, device= 'cuda:0')
         logits = self.NN(inputData)
         logits = logits/self.softmatTemp
         logits = self.tanhC*torch.tanh(logits)
@@ -26,7 +26,7 @@ class Controller(nn.Module):
     def sample(self):
         logits = self.probCalc()
         inxBuffer = 0
-        actions = torch.zeros((self.batchSize,0), dtype=torch.int)
+        actions = torch.zeros((self.batchSize,0), dtype=torch.int, device='cuda:0')
         for inx in range(1, self.tree.tree.count+1):
             if BinaryTree.ShowTree(self.tree.tree, inx).is_unary:
                 logit = logits[:, inxBuffer:inxBuffer+len(unary_functions)]
