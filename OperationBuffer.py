@@ -6,7 +6,7 @@ class Buffer(object):
     def refresh(self, candidate):
         change = False
         for inx, oldCandidate in enumerate(self.bufferzone):
-            if oldCandidate.action == candidate.action and oldCandidate.error >= candidate.error:
+            if oldCandidate.action.detach().cpu().tolist() == candidate.action.detach().cpu().tolist() and oldCandidate.error >= candidate.error:
                 change = True
                 changeinx = inx
                 break

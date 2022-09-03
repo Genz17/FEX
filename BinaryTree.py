@@ -137,24 +137,22 @@ class TrainableTree(nn.Module):
         self.dim                = dim
         self.tree               = BasicTreeGen()
         self.operators          = {}
-        self.linearTransform    = {}
-        self.OperatorsGen(self.tree)
-        self.LinearGen()
-        self.operators          = nn.ModuleDict(self.operators)
+        self.linearTransform    = {str(i):nn.Linear(dim, 1) for i in LeaveNumCompute(self.tree)}
         self.linearTransform    = nn.ModuleDict(self.linearTransform)
+        self.OperatorsGen(self.tree)
+        self.operators          = nn.ModuleDict(self.operators)
 
     def forward(self, inputData):
         return ComputeThroughTree(self.tree, self.linearTransform, inputData)
 
     def PlaceOP(self, operationList):
         OperationPlace(self.tree, operationList, self.operators)
+        self.operationList = operationList
 
     def LinearGen(self):
-        for i in LeaveNumCompute(self.tree):
-            L = nn.Linear(self.dim, 1)
-            nn.init.ones_(L.weight)
-            nn.init.ones_(L.bias)
-            self.linearTransform.update({str(i):L})
+        for key in self.linearTransform:
+            nn.init.ones_(self.linearTransform[key].weight)
+            nn.init.zeros_(self.linearTransform[key].bias)
 
     def OperatorsGen(self, tree):
         if tree.leftchild == None and tree.rightchild == None:
