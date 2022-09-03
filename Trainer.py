@@ -38,22 +38,21 @@ def train(model, dim, max_iter):
         err.backward()
         optimizer.step()
         for i in range(len(buffer.bufferzone)):
-            print(buffer.bufferzone[i].action)
+            print(buffer.bufferzone[i].action, buffer.bufferzone[i].error)
 
         with torch.no_grad():
-            x = torch.linspace(-1,1,1000).view(1000,1).cuda()
-            z = (0.5*x**2).view(1000)
+            x = DataGen(100, dim, -1, 1).cuda()
+            z = 0.5*torch.sum(x**2, 1).view(100,1)
             y = buffer.bufferzone[0].tree(x)
-            print('relerr: {}'.format(torch.norm(y.view(1000)-z)/torch.norm(z)))
-            x = x.view(1000).cpu().detach().numpy()
-            y = y.view(1000).cpu().detach().numpy()
+            print('relerr: {}'.format(torch.norm(y-z)/torch.norm(z)))
+            #x = x.view(1000).cpu().detach().numpy()
+            #y = y.view(1000).cpu().detach().numpy()
             #fig = plt.figure()
             #plt.plot(x,y)
             #plt.show()
 
 
 if __name__ == '__main__':
-    #torch.autograd.set_detect_anomaly(True)
     tree = BinaryTree.TrainableTree(1).cuda()
     model = Controller(tree).cuda()
     train(model, 1, 10)

@@ -137,7 +137,7 @@ class TrainableTree(nn.Module):
         self.dim                = dim
         self.tree               = BasicTreeGen()
         self.operators          = {}
-        self.linearTransform    = {str(i):nn.Linear(dim, 1) for i in LeaveNumCompute(self.tree)}
+        self.linearTransform    = {str(i):nn.Sequential(nn.Linear(dim, dim),nn.ReLU(),nn.Linear(dim, 1)) for i in LeaveNumCompute(self.tree)}
         self.linearTransform    = nn.ModuleDict(self.linearTransform)
         self.OperatorsGen(self.tree)
         self.operators          = nn.ModuleDict(self.operators)
@@ -151,8 +151,12 @@ class TrainableTree(nn.Module):
 
     def LinearGen(self):
         for key in self.linearTransform:
-            nn.init.ones_(self.linearTransform[key].weight)
-            nn.init.zeros_(self.linearTransform[key].bias)
+            for layer in self.linearTransform[key].modules():
+                try:
+                    nn.init.ones_(layer.weight)
+                    nn.init.zeros_(layer.bias)
+                except BaseException:
+                    pass
 
     def OperatorsGen(self, tree):
         if tree.leftchild == None and tree.rightchild == None:
