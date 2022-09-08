@@ -41,15 +41,15 @@ def train(model, dim, max_iter):
             print(buffer.bufferzone[i].action, buffer.bufferzone[i].error)
 
         with torch.no_grad():
-            x = DataGen(100, dim, -1, 1).cuda()
-            z = 0.5*torch.sum(x**2, 1).view(100,1)
+            x = torch.linspace(-1,1,1000, device='cuda:0').view(1000,1)
+            z = 0.5*torch.sum(x**2, 1).view(1000,1)
             y = buffer.bufferzone[0].tree(x)
             print('relerr: {}'.format(torch.norm(y-z)/torch.norm(z)))
-            #x = x.view(1000).cpu().detach().numpy()
-            #y = y.view(1000).cpu().detach().numpy()
-            #fig = plt.figure()
-            #plt.plot(x,y)
-            #plt.show()
+            x = x.view(1000).cpu().detach().numpy()
+            y = y.view(1000).cpu().detach().numpy()
+            fig = plt.figure()
+            plt.plot(x,y)
+            plt.show()
 
 
 if __name__ == '__main__':
